@@ -1,6 +1,6 @@
 spring:
     datasource:
-      url: jdbc:h2:file:./media/database/videodb
+      url: jdbc:h2:file:${FILE_DATABASE_PATH}
       username: ${H2_USERNAME}
       password: ${H2_PASSWORD}
     jpa:

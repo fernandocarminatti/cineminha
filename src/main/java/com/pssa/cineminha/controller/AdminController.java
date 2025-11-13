@@ -1,6 +1,7 @@
 package com.pssa.cineminha.controller;
 
-import com.pssa.cineminha.service.LibraryManagementService;
+import com.pssa.cineminha.service.CatalogManagementService;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -12,26 +13,26 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/library")
+@RequestMapping("/api/v1/admin/catalog")
 public class AdminController {
 
-    public LibraryManagementService libraryManagementService;
+    private final CatalogManagementService catalogManagementService;
     private final Logger log = LoggerFactory.getLogger(AdminController.class);
 
-    public AdminController(LibraryManagementService libraryManagementService) {
-        this.libraryManagementService = libraryManagementService;
+    public AdminController(CatalogManagementService catalogManagementService) {
+        this.catalogManagementService = catalogManagementService;
     }
 
     @PostMapping("/scan")
     public ResponseEntity<Void> triggerLibraryScan() {
-        libraryManagementService.scanForNewFiles();
+        catalogManagementService.scanForNewFiles();
         log.info("Library scan triggered");
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/convert/{id}")
-    public ResponseEntity<Void> triggerVideoConversion(@PathVariable UUID id){
-        libraryManagementService.startVideoConversion(id);
+    public ResponseEntity<Resource> triggerVideoConversion(@PathVariable UUID id){
+        catalogManagementService.startVideoConversion(id);
         log.info("Video conversion triggered for video with id {}", id);
         return ResponseEntity.ok().build();
     }

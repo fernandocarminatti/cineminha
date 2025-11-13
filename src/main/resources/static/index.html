@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Stream Test</title>
+    <style>
+        body { font-family: sans-serif; background-color: #111; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 2rem; }
+        video { width: 90%; max-width: 1200px; }
+        .info { margin-top: 2rem; color: #888; font-family: monospace; }
+        .info p { margin: 0.5rem; }
+        .info input { background-color: #333; color: #eee; border: 1px solid #555; padding: 8px; width: 400px; }
+        .info button { padding: 8px 16px; }
+    </style>
+</head>
+<body>
+
+<h1>Video Stream Test Page</h1>
+
+<video id="videoPlayer" controls autoplay>
+    Your browser does not support the video tag.
+</video>
+
+<div class="info">
+    <p>To test, find a video UUID from your H2 console.</p>
+    <p>Paste it below and click "Load Video".</p>
+    <div>
+        <input type="text" id="videoIdInput" placeholder="Paste Video UUID here...">
+        <button onclick="loadVideo()">Load Video</button>
+    </div>
+</div>
+
+<script>
+    function loadVideo() {
+        const videoId = document.getElementById('videoIdInput').value;
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        if (!videoId) {
+            alert('Please paste a Video UUID.');
+            return;
+        }
+
+        const streamUrl = `/api/v1/videos/stream/${videoId}`;
+
+        console.log('Loading video from:', streamUrl);
+
+        videoPlayer.src = streamUrl;
+
+        videoPlayer.load();
+        videoPlayer.play();
+    }
+</script>
+
+</body>
+</html>

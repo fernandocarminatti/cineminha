@@ -27,13 +27,14 @@ public class VideoFile {
     public VideoFile(String title, String sourcePath) {
         this.title = title;
         this.sourcePath = sourcePath;
+        this.status = VideoStatus.NEW;
     }
 
-    public UUID getUuid() {
+    public UUID getId() {
         return id;
     }
 
-    public void setUuid(UUID id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

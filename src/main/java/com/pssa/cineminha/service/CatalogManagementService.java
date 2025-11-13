@@ -1,7 +1,9 @@
 package com.pssa.cineminha.service;
 
+import com.pssa.cineminha.dto.VideoFileResponseDto;
 import com.pssa.cineminha.entity.VideoFile;
 import com.pssa.cineminha.entity.VideoStatus;
+import com.pssa.cineminha.exception.RemuxProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +22,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Service
-public class LibraryManagementService {
+public class CatalogManagementService {
     @Value("${app.storage.source-dir}")
     private String sourceDir;
     @Value("${app.storage.processed-dir}")
@@ -28,10 +30,10 @@ public class LibraryManagementService {
     @Value("${app.storage.thumbnail-dir}")
     private String thumbnailDir;
 
-    private VideoRepository videoRepository;
-    private final Logger log = LoggerFactory.getLogger(LibraryManagementService.class);
+    private final VideoRepository videoRepository;
+    private final Logger log = LoggerFactory.getLogger(CatalogManagementService.class);
 
-    public LibraryManagementService(VideoRepository videoRepository) {
+    public CatalogManagementService(VideoRepository videoRepository) {
         this.videoRepository = videoRepository;
     }
 
@@ -81,7 +83,6 @@ public class LibraryManagementService {
         videoRepository.save(video);
         log.info("Starting video conversion for video with id {}", videoId);
 
-
         try{
             Path sourcePath = Paths.get(video.getSourcePath());
             String baseFileName = sourcePath.getFileName().toString().replaceFirst("[.][^.]+$","");
@@ -92,7 +93,7 @@ public class LibraryManagementService {
             new File(processedDir).mkdirs();
             new File(thumbnailDir).mkdirs();
 
-            // ffmpeg
+            // "Remuxing"
             runProcess(
                     "ffmpeg",
                     "-i", sourcePath.toString(),
@@ -103,7 +104,7 @@ public class LibraryManagementService {
                     "-y",
                     mp4OutputPath.toString()
             );
-
+            log.info("Successfully remuxed '{}'", video.getTitle());
             // Thumbnail
             runProcess(
                     "ffmpeg",
@@ -119,8 +120,7 @@ public class LibraryManagementService {
             video.setThumbnailPath(thumbnailOutputPath.toString());
             video.setStatus(VideoStatus.READY);
             videoRepository.save(video);
-            log.info("Successfully converted '{}'", video.getTitle());
-
+            log.info("Finished runprocess '{}'", video.getTitle());
         } catch (Exception e) {
             video.setStatus(VideoStatus.ERROR);
             videoRepository.save(video);
@@ -135,11 +135,15 @@ public class LibraryManagementService {
         Process process = processBuilder.start();
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new RuntimeException("Process exited with code " + exitCode);
+            throw new RemuxProcessingException("Error on remuxing file " + exitCode);
         }
     }
 
-    public List<VideoFile> getVideoFilesByStatus(VideoStatus status){
+    public List<VideoFileResponseDto> getVideoFilesByStatus(VideoStatus status){
         return this.videoRepository.findByStatus(status);
+    }
+
+    public Optional<VideoFile> getVideoById(UUID id){
+        return this.videoRepository.findById(id);
     }
 }
