@@ -1,5 +1,6 @@
 package com.pssa.cineminha.exception;
 
+import org.slf4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -10,6 +11,7 @@ import java.util.Objects;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    private final Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
     final String SERVER_EXPLODED = "Could not handle request, server exploded.";
 
     @ExceptionHandler(RemuxProcessingException.class)
@@ -35,6 +37,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
+        log.error("Generic exception: {} - {}", e.getCause(), e.getMessage());
         return ResponseEntity.internalServerError().body(SERVER_EXPLODED);
     }
 }

@@ -18,7 +18,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,7 +41,7 @@ public class CatalogManagementService {
     }
 
     public void scanForNewFiles() {
-        log.info("Scanning for new files in {}", sourceDir);
+        log.info("Scan Triggered - Searching in {}", sourceDir);
         Path sourcePath = Paths.get(sourceDir);
 
         if(!Files.exists(sourcePath) || !Files.isDirectory(sourcePath)){
@@ -168,9 +167,16 @@ public class CatalogManagementService {
             log.info("Video with id {} not found - Nothing to do.", id);
             return false;
         }
+
+        if(video.get().getProcessedPath() == null || video.get().getThumbnailPath() == null){
+            log.info("Video with id {} has no processed path or thumbnail file - Nothing to do.", id);
+            return false;
+        }
+
         try {
             log.info("Trying to remove record {} from disk", id);
-            Files.delete(Paths.get(video.get().getSourcePath()));
+            removeFromDisk(video.get());
+            videoRepository.deleteById(id);
             return true;
         } catch (Exception e) {
             log.error("Error deleting video record with id {}", id, e);
@@ -180,9 +186,9 @@ public class CatalogManagementService {
 
     public void removeFromDisk(VideoFile video) {
         try{
-            Files.delete(Paths.get(video.getSourcePath()));
             Files.delete(Paths.get(video.getProcessedPath()));
             Files.delete(Paths.get(video.getThumbnailPath()));
+            log.info("Successfully deleted video file from disk");
         } catch (IOException e){
             log.error("Error deleting video file from disk: {}", e.getMessage());
         }
