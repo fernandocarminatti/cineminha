@@ -31,7 +31,7 @@ public class StreamingService {
             return ResponseEntity.notFound().build();
         }
         VideoFile video = optionalVideo.get();
-
+        log.info("Streaming video with ID {}", videoId);
         try {
             File videoFile = new File(video.getProcessedPath());
             Resource resource = new FileSystemResource(videoFile);
@@ -39,18 +39,18 @@ public class StreamingService {
             HttpRange range = headers.getRange().stream().findFirst().orElse(null);
 
             if (range != null) {
+                log.info("Range requested: {}", range);
                 long start = range.getRangeStart(length);
                 long end = range.getRangeEnd(length);
                 long contentLength = end - start + 1;
-
                 ResourceRegion region = new ResourceRegion(resource, start, contentLength);
                 return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
                         .contentType(MediaType.valueOf("video/mp4"))
                         .contentLength(contentLength)
                         .body(region);
             } else {
+                log.info("No range requested");
                 ResourceRegion region = new ResourceRegion(resource, 0, Math.min(CHUNK_SIZE, length));
-
                 return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
                         .contentType(MediaType.valueOf("video/mp4"))
                         .contentLength(region.getCount())

@@ -82,17 +82,15 @@ public class CatalogManagementService {
         optVideoFile.get().setStatus(VideoStatus.CONVERTING);
         videoRepository.save(video);
         log.info("Starting video conversion for video with id {}", videoId);
-
         try{
             Path sourcePath = Paths.get(video.getSourcePath());
             String baseFileName = sourcePath.getFileName().toString().replaceFirst("[.][^.]+$","");
-
             Path mp4OutputPath = Paths.get(processedDir, baseFileName + ".mp4");
             Path thumbnailOutputPath = Paths.get(thumbnailDir, baseFileName + ".jpg");
-
             new File(processedDir).mkdirs();
             new File(thumbnailDir).mkdirs();
 
+            log.info("Starting remuxing of '{}'", video.getTitle());
             // "Remuxing"
             runProcess(
                     "ffmpeg",
@@ -105,6 +103,7 @@ public class CatalogManagementService {
                     mp4OutputPath.toString()
             );
             log.info("Successfully remuxed '{}'", video.getTitle());
+            log.info("Starting thumbnail creation of '{}'", video.getTitle());
             // Thumbnail
             runProcess(
                     "ffmpeg",
@@ -135,7 +134,7 @@ public class CatalogManagementService {
         Process process = processBuilder.start();
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new RemuxProcessingException("Error on remuxing file " + exitCode);
+            throw new RemuxProcessingException(exitCode + " returned from remuxing process");
         }
     }
 
