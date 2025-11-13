@@ -4,21 +4,25 @@ import com.pssa.cineminha.dto.VideoFileResponseDto;
 import com.pssa.cineminha.entity.VideoFile;
 import com.pssa.cineminha.entity.VideoStatus;
 import com.pssa.cineminha.exception.RemuxProcessingException;
+import com.pssa.cineminha.repository.VideoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import com.pssa.cineminha.repository.VideoRepository;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -91,10 +95,13 @@ public class CatalogManagementService {
             new File(thumbnailDir).mkdirs();
 
             log.info("Starting remuxing of '{}'", video.getTitle());
+            String audioStreamIndex = grabEnglishAudio(sourcePath.toString());
             // "Remuxing"
             runProcess(
                     "ffmpeg",
                     "-i", sourcePath.toString(),
+                    "-map", "0:v",
+                    "-map", "0:a:" + audioStreamIndex,
                     "-c:v", "copy",
                     "-c:a", "aac",
                     "-ac", "2",
@@ -120,14 +127,19 @@ public class CatalogManagementService {
             video.setStatus(VideoStatus.READY);
             videoRepository.save(video);
             log.info("Finished runprocess '{}'", video.getTitle());
-        } catch (Exception e) {
+        } catch (IOException e) {
             video.setStatus(VideoStatus.ERROR);
             videoRepository.save(video);
-            log.error("Failed to convert '{}'. Error: {}", video.getTitle(), e.getMessage());
+            log.error("IOException for '{}'. Error: {}", video.getTitle(), e.getMessage());
+        }
+        catch (InterruptedException e) {
+            video.setStatus(VideoStatus.ERROR);
+            videoRepository.save(video);
+            log.error("Interrupted Exception for '{}'. Error: {}", video.getTitle(), e.getMessage());
         }
     }
 
-    private void runProcess(String... command) throws Exception {
+    private void runProcess(String... command) throws IOException, InterruptedException {
         log.info("Executing command: {}", String.join(" ", command));
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.inheritIO();
@@ -144,5 +156,67 @@ public class CatalogManagementService {
 
     public Optional<VideoFile> getVideoById(UUID id){
         return this.videoRepository.findById(id);
+    }
+
+    public List<VideoFile> getAllVideos(){
+        return this.videoRepository.findAll();
+    }
+
+    public boolean deleteVideoRecord(UUID id){
+        Optional<VideoFile> video = this.videoRepository.findById(id);
+        if(video.isEmpty()){
+            log.info("Video with id {} not found - Nothing to do.", id);
+            return false;
+        }
+        try {
+            log.info("Trying to remove record {} from disk", id);
+            Files.delete(Paths.get(video.get().getSourcePath()));
+            return true;
+        } catch (Exception e) {
+            log.error("Error deleting video record with id {}", id, e);
+            return false;
+        }
+    }
+
+    public void removeFromDisk(VideoFile video) {
+        try{
+            Files.delete(Paths.get(video.getSourcePath()));
+            Files.delete(Paths.get(video.getProcessedPath()));
+            Files.delete(Paths.get(video.getThumbnailPath()));
+        } catch (IOException e){
+            log.error("Error deleting video file from disk: {}", e.getMessage());
+        }
+    }
+
+    public String grabEnglishAudio(String sourcePath) throws IOException, InterruptedException {
+        // TODO: Exchange into audio/subtitle generation via request DTO if usage of this idea happens.
+        ProcessBuilder pb = new ProcessBuilder(
+                "ffprobe",
+                "-v", "error",
+                "-select_streams", "a",
+                "-show_entries", "stream=index:stream_tags=language",
+                "-of", "csv=p=0",
+                sourcePath
+        );
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+        String output;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            output = reader.lines().collect(Collectors.joining("\n"));
+        }
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new RemuxProcessingException("ffprobe returned " + exitCode);
+        }
+        log.info("ffprobe finished. ExitCode - {}", exitCode);
+        String[] lines = output.split("\\R");
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].contains("eng")) {
+                log.info("Found eng audio stream index {}", i);
+                return String.valueOf(i);
+            }
+        }
+        log.info("No eng audio stream found. Fallback into index 0");
+        return "0";
     }
 }
