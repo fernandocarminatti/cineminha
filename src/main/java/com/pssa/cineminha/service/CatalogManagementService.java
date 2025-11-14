@@ -5,6 +5,7 @@ import com.pssa.cineminha.entity.VideoFile;
 import com.pssa.cineminha.entity.VideoStatus;
 import com.pssa.cineminha.exception.RemuxProcessingException;
 import com.pssa.cineminha.repository.VideoRepository;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -38,6 +38,16 @@ public class CatalogManagementService {
 
     public CatalogManagementService(VideoRepository videoRepository) {
         this.videoRepository = videoRepository;
+    }
+
+    @PostConstruct
+    public void initDirs() {
+        try {
+            Files.createDirectories(Paths.get(processedDir));
+            Files.createDirectories(Paths.get(thumbnailDir));
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to create required media directories", e);
+        }
     }
 
     public void scanForNewFiles() {
@@ -87,11 +97,9 @@ public class CatalogManagementService {
         log.info("Starting video conversion for video with id {}", videoId);
         try{
             Path sourcePath = Paths.get(video.getSourcePath());
-            String baseFileName = sourcePath.getFileName().toString().replaceFirst("[.][^.]+$","");
-            Path mp4OutputPath = Paths.get(processedDir, baseFileName + ".mp4");
-            Path thumbnailOutputPath = Paths.get(thumbnailDir, baseFileName + ".jpg");
-            new File(processedDir).mkdirs();
-            new File(thumbnailDir).mkdirs();
+            Path mp4OutputPath = Paths.get(processedDir, video.getId() + ".mp4");
+            Path thumbnailOutputPath = Paths.get(thumbnailDir, video.getId() + ".jpg");
+
 
             log.info("Starting remuxing of '{}'", video.getTitle());
             String audioStreamIndex = grabEnglishAudio(sourcePath.toString());
@@ -113,7 +121,7 @@ public class CatalogManagementService {
             // Thumbnail
             runProcess(
                     "ffmpeg",
-                    "-i", mp4OutputPath.toString(),
+                    "-i", sourcePath.toString(),
                     "-ss", "00:01:00",
                     "-vframes", "1",
                     "-q:v", "2",
@@ -121,20 +129,15 @@ public class CatalogManagementService {
                     thumbnailOutputPath.toString()
             );
 
-            video.setProcessedPath(mp4OutputPath.toString());
-            video.setThumbnailPath(thumbnailOutputPath.toString());
+            video.setProcessedFile(mp4OutputPath.getFileName().toString());
+            video.setThumbnailFile(thumbnailOutputPath.getFileName().toString());
             video.setStatus(VideoStatus.READY);
             videoRepository.save(video);
             log.info("Finished runprocess '{}'", video.getTitle());
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             video.setStatus(VideoStatus.ERROR);
             videoRepository.save(video);
             log.error("IOException for '{}'. Error: {}", video.getTitle(), e.getMessage());
-        }
-        catch (InterruptedException e) {
-            video.setStatus(VideoStatus.ERROR);
-            videoRepository.save(video);
-            log.error("Interrupted Exception for '{}'. Error: {}", video.getTitle(), e.getMessage());
         }
     }
 
@@ -168,7 +171,7 @@ public class CatalogManagementService {
             return false;
         }
 
-        if(video.get().getProcessedPath() == null || video.get().getThumbnailPath() == null){
+        if(video.get().getProcessedFile() == null || video.get().getThumbnailFile() == null){
             log.info("Video with id {} has no processed path or thumbnail file - Nothing to do.", id);
             return false;
         }
@@ -186,8 +189,8 @@ public class CatalogManagementService {
 
     public void removeFromDisk(VideoFile video) {
         try{
-            Files.delete(Paths.get(video.getProcessedPath()));
-            Files.delete(Paths.get(video.getThumbnailPath()));
+            Files.delete(Paths.get(video.getProcessedFile()));
+            Files.delete(Paths.get(video.getThumbnailFile()));
             log.info("Successfully deleted video file from disk");
         } catch (IOException e){
             log.error("Error deleting video file from disk: {}", e.getMessage());

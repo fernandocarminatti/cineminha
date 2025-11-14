@@ -3,6 +3,7 @@ package com.pssa.cineminha.service;
 import com.pssa.cineminha.entity.VideoFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourceRegion;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,6 +20,8 @@ import java.util.UUID;
 public class StreamingService {
 
     private static final int CHUNK_SIZE = 1024 * 1024;
+    @Value("${app.storage.processed-dir}")
+    private String processedFilesDir;
     private final Logger log = LoggerFactory.getLogger(StreamingService.class);
     private final CatalogManagementService catalogManagementService;
 
@@ -27,14 +31,14 @@ public class StreamingService {
 
     public ResponseEntity<ResourceRegion> streamVideo(UUID videoId, HttpHeaders headers) {
         Optional<VideoFile> optionalVideo = catalogManagementService.getVideoById(videoId);
-        if (optionalVideo.isEmpty() || optionalVideo.get().getProcessedPath() == null) {
+        if (optionalVideo.isEmpty() || optionalVideo.get().getProcessedFile() == null) {
             return ResponseEntity.notFound().build();
         }
         VideoFile video = optionalVideo.get();
-        log.info("Streaming video with ID {}", videoId);
         try {
-            File videoFile = new File(video.getProcessedPath());
-            Resource resource = new FileSystemResource(videoFile);
+            File videoFile = new File(video.getProcessedFile());
+            Resource resource = new FileSystemResource(Paths.get(processedFilesDir).normalize().resolve(videoFile.toString()));
+            log.info("Trying to serve from disk - {} ", resource.getURI());
             long length = resource.contentLength();
             HttpRange range = headers.getRange().stream().findFirst().orElse(null);
 

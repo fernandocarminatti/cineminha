@@ -15,8 +15,8 @@ public class VideoFile {
     private UUID id;
     private String title;
     private String sourcePath;
-    private String processedPath;
-    private String thumbnailPath;
+    private String processedFile;
+    private String thumbnailFile;
 
     @Enumerated(EnumType.STRING)
     private VideoStatus status;
@@ -54,20 +54,20 @@ public class VideoFile {
         this.sourcePath = sourcePath;
     }
 
-    public String getProcessedPath() {
-        return processedPath;
+    public String getProcessedFile() {
+        return processedFile;
     }
 
-    public void setProcessedPath(String processedPath) {
-        this.processedPath = processedPath;
+    public void setProcessedFile(String processedFile) {
+        this.processedFile = processedFile;
     }
 
-    public String getThumbnailPath() {
-        return thumbnailPath;
+    public String getThumbnailFile() {
+        return thumbnailFile;
     }
 
-    public void setThumbnailPath(String thumbnailPath) {
-        this.thumbnailPath = thumbnailPath;
+    public void setThumbnailFile(String thumbnailFile) {
+        this.thumbnailFile = thumbnailFile;
     }
 
     public VideoStatus getStatus() {

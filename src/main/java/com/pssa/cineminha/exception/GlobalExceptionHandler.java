@@ -1,5 +1,7 @@
 package com.pssa.cineminha.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -36,8 +38,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        log.error("Generic exception: {} - {}", e.getCause(), e.getMessage());
+    public ResponseEntity<String> handleException(Exception e, HttpServletRequest request) {
+        log.error("Exception: {} - {}", e.getCause(), e.getLocalizedMessage());
+        log.warn("Request was: {}", request.getRequestURL());
         return ResponseEntity.internalServerError().body(SERVER_EXPLODED);
     }
 }
