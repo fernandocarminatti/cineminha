@@ -17,6 +17,12 @@ spring:
         path: /h2-console
 server:
   port: 8080
+  servlet:
+    session:
+      cookie:
+        secure: true
+        http-only: true
+        same-site: strict
 app:
   storage:
     source-dir: ./media/source
