@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -26,6 +27,12 @@ public class AdminController {
     public ResponseEntity<List<VideoFile>> getAllVideos(){
         List<VideoFile> videos = this.catalogManagementService.getAllVideos();
         return ResponseEntity.ok(videos);
+    }
+
+    @GetMapping("{id}")
+    public ResponseEntity<VideoFile> getVideoById(@PathVariable UUID id){
+        Optional<VideoFile> video = this.catalogManagementService.getVideoById(id);
+        return video.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/scan")
