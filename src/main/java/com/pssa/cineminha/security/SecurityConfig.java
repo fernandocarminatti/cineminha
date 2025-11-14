@@ -36,10 +36,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/static/thumbnails/**").permitAll()
-                        .requestMatchers("/api/v1/videos/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/h2-console/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/**").hasRole("ADMIN")
+                        .anyRequest().permitAll()
                 )
                 .formLogin(login -> login
                         .loginProcessingUrl("/api/v1/auth/login")
