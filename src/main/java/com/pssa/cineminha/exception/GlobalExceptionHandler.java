@@ -1,7 +1,6 @@
 package com.pssa.cineminha.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,6 +18,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RemuxProcessingException.class)
     public ResponseEntity<String> handleRemuxProcessingException(RemuxProcessingException e) {
         return ResponseEntity.internalServerError().body(e.getMessage());
+    }
+
+    @ExceptionHandler(VideoNotFoundException.class)
+    public ResponseEntity<Void> handleVideoNotFoundException(VideoNotFoundException e) {
+        return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

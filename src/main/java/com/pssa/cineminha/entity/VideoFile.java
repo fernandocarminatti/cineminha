@@ -14,7 +14,7 @@ public class VideoFile {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private String title;
-    private String sourcePath;
+    private String sourceFile;
     private String processedFile;
     private String thumbnailFile;
 
@@ -24,9 +24,10 @@ public class VideoFile {
 
     public VideoFile() {}
 
-    public VideoFile(String title, String sourcePath) {
-        this.title = title;
-        this.sourcePath = sourcePath;
+    public VideoFile(String sourceFile) {
+        this.title = sourceFile.substring(0, sourceFile.lastIndexOf('.'))
+                .replaceAll("[._]", " ");
+        this.sourceFile = sourceFile;
         this.status = VideoStatus.NEW;
     }
 
@@ -46,12 +47,12 @@ public class VideoFile {
         this.title = title;
     }
 
-    public String getSourcePath() {
-        return sourcePath;
+    public String getSourceFile() {
+        return sourceFile;
     }
 
-    public void setSourcePath(String sourcePath) {
-        this.sourcePath = sourcePath;
+    public void setSourceFile(String sourceFile) {
+        this.sourceFile = sourceFile;
     }
 
     public String getProcessedFile() {
@@ -76,10 +77,17 @@ public class VideoFile {
 
     public void setStatus(VideoStatus status) {
         this.status = status;
+        if(status == VideoStatus.ERROR){
+            this.clearFiles();
+        }
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
+    public void clearFiles(){
+        this.processedFile = null;
+        this.thumbnailFile = null;
+    }
 }

@@ -43,16 +43,13 @@ public class AdminController {
 
     @PostMapping("/convert/{id}")
     public ResponseEntity<Resource> triggerVideoConversion(@PathVariable UUID id){
-        catalogManagementService.startVideoConversion(id);
-        return ResponseEntity.ok().build();
+        catalogManagementService.triggerVideoProcessing(id);
+        return ResponseEntity.accepted().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVideo(@PathVariable UUID id){
-        boolean deleted = catalogManagementService.deleteVideoRecord(id);
-        if (deleted) {
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+        catalogManagementService.deleteVideoRecord(id);
+        return ResponseEntity.ok().build();
     }
 }
