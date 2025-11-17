@@ -34,24 +34,25 @@ This project is built with the following technologies:
 
 ### Getting Started
 
-This project is built with the idea of eventually being served as a self-contained Docker image. However, a public image is not yet available.
-
-For now, you are on your own to run it. The application can be started directly from the source using the Maven wrapper:
+This project is intended to be run as a self-contained Docker image. You can build and run it locally using Docker.
 
 ```bash
-# Set the required environment variables first
-export ADMIN_USERNAME="your_admin_user"
-export ADMIN_PASSWORD="your_strong_password"
-export H2_USERNAME="h2_database_username"
-export H2_PASSWORD=""
-
-# Run the application
-./mvnw spring-boot:run
+# Build the Docker image
+docker build -t cineminha:0.0.1 .
 ```
 
 ### Configuration
 
-The application is configured via environment variables to set the administrator credentials. The application will fail to start if these are not provided.
+Create a `.env` file with the required environment variables:
+
+```bash
+ADMIN_USERNAME=your_admin_user
+ADMIN_PASSWORD=your_strong_password
+H2_USERNAME=h2_database_username
+H2_PASSWORD=your_h2_password
+```
+
+The application will fail to start if these environment variables are not provided.
 
 | Environment Variable | Description                                 |
 |----------------------|---------------------------------------------|
@@ -59,6 +60,24 @@ The application is configured via environment variables to set the administrator
 | `ADMIN_PASSWORD`     | The password for the administrator account. |
 | `H2_USERNAME`        | The username for the database account.      |
 | `H2_PASSWORD`        | The password for the database account.      |
+
+### Running the Application
+
+Run the application using Docker with your environment file and media volume:
+
+```bash
+docker run -d \
+  --env-file ~/.dev-config/cineminha.env \
+  -v ~/path/to/source/mkv:/app/media/source:ro \
+  -p 8080:8080 \
+  cineminha:0.0.1
+```
+
+This command will:
+- Run the container in detached mode (`-d`)
+- Load environment variables from your config file
+- Mount your media source directory as read-only. `-v ~/host:/container:ro`
+- Expose the application on port 8080 or whatever port you prefer.
 
 ### License
 

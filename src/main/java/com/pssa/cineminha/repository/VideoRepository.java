@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface VideoRepository extends JpaRepository<VideoFile, UUID> {
-    Optional<VideoFile> findBySourcePath(String sourcePath);
+    Optional<VideoFile> findBySourceFile(String sourceFile);
     List<VideoFileResponseDto> findByStatus(VideoStatus status);
 }

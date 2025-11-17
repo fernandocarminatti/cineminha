@@ -1,18 +1,17 @@
 package com.pssa.cineminha.service;
 
+import com.pssa.cineminha.config.MediaStorageProperties;
 import com.pssa.cineminha.entity.VideoFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,12 +19,12 @@ import java.util.UUID;
 public class StreamingService {
 
     private static final int CHUNK_SIZE = 1024 * 1024;
-    @Value("${app.storage.processed-dir}")
-    private String processedFilesDir;
-    private final Logger log = LoggerFactory.getLogger(StreamingService.class);
+    private final MediaStorageProperties mediaStorageProperties;
     private final CatalogManagementService catalogManagementService;
+    private final Logger log = LoggerFactory.getLogger(StreamingService.class);
 
-    public StreamingService(CatalogManagementService catalogManagementService) {
+    public StreamingService(MediaStorageProperties mediaStorageProperties, CatalogManagementService catalogManagementService) {
+        this.mediaStorageProperties = mediaStorageProperties;
         this.catalogManagementService = catalogManagementService;
     }
 
@@ -36,8 +35,8 @@ public class StreamingService {
         }
         VideoFile video = optionalVideo.get();
         try {
-            File videoFile = new File(video.getProcessedFile());
-            Resource resource = new FileSystemResource(Paths.get(processedFilesDir).normalize().resolve(videoFile.toString()));
+            Path videoPath = mediaStorageProperties.getProcessedDir().normalize().resolve(video.getProcessedFile());
+            Resource resource = new FileSystemResource(videoPath);
             log.info("Trying to serve from disk - {} ", resource.getURI());
             long length = resource.contentLength();
             HttpRange range = headers.getRange().stream().findFirst().orElse(null);
