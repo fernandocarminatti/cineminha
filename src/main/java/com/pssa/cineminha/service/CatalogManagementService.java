@@ -3,11 +3,9 @@ package com.pssa.cineminha.service;
 import com.pssa.cineminha.config.MediaStorageProperties;
 import com.pssa.cineminha.dto.VideoFileResponseDto;
 import com.pssa.cineminha.entity.VideoFile;
-import com.pssa.cineminha.exception.VideoNotFoundException;
 import com.pssa.cineminha.repository.VideoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -33,13 +31,12 @@ public class CatalogManagementService {
     public void scanForNewFiles() {
         Path sourcePath = mediaStorageProperties.getSourceDir().normalize();
         log.info("Scan Triggered - Searching in {}", sourcePath);
-
         if(!Files.exists(sourcePath) || !Files.isDirectory(sourcePath)){
             log.error("Source directory {} does not exist or is not a directory", sourcePath);
             return;
         }
 
-        try (Stream<Path> paths = Files.walk(sourcePath )){
+        try (Stream<Path> paths = Files.walk(sourcePath)){
             paths
                     .filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".mkv"))

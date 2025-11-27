@@ -2,7 +2,6 @@ package com.pssa.cineminha.controller;
 
 import com.pssa.cineminha.entity.VideoFile;
 import com.pssa.cineminha.service.CatalogManagementService;
-import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

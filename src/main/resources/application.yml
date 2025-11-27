@@ -26,8 +26,6 @@ server:
 app:
   storage:
     source-dir: ./media/source
-    processed-dir: ./media/processed
-    thumbnail-dir: ./media/thumbnails
   security:
     admin:
       username: ${ADMIN_USERNAME}
