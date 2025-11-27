@@ -2,7 +2,6 @@ package com.pssa.cineminha.controller;
 
 import com.pssa.cineminha.entity.VideoFile;
 import com.pssa.cineminha.service.CatalogManagementService;
-import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -38,18 +37,6 @@ public class AdminController {
     @PostMapping("/scan")
     public ResponseEntity<Void> triggerLibraryScan() {
         catalogManagementService.scanForNewFiles();
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/convert/{id}")
-    public ResponseEntity<Resource> triggerVideoConversion(@PathVariable UUID id){
-        catalogManagementService.triggerVideoProcessing(id);
-        return ResponseEntity.accepted().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVideo(@PathVariable UUID id){
-        catalogManagementService.deleteVideoRecord(id);
         return ResponseEntity.ok().build();
     }
 }

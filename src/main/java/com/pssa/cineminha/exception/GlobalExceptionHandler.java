@@ -15,11 +15,6 @@ public class GlobalExceptionHandler {
     private final Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
     final String SERVER_EXPLODED = "Could not handle request, server exploded.";
 
-    @ExceptionHandler(RemuxProcessingException.class)
-    public ResponseEntity<String> handleRemuxProcessingException(RemuxProcessingException e) {
-        return ResponseEntity.internalServerError().body(e.getMessage());
-    }
-
     @ExceptionHandler(VideoNotFoundException.class)
     public ResponseEntity<Void> handleVideoNotFoundException(VideoNotFoundException e) {
         return ResponseEntity.notFound().build();

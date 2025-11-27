@@ -30,14 +30,14 @@ public class StreamingService {
 
     public ResponseEntity<ResourceRegion> streamVideo(UUID videoId, HttpHeaders headers) {
         Optional<VideoFile> optionalVideo = catalogManagementService.getVideoById(videoId);
-        if (optionalVideo.isEmpty() || optionalVideo.get().getProcessedFile() == null) {
+        if (optionalVideo.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         VideoFile video = optionalVideo.get();
         try {
-            Path videoPath = mediaStorageProperties.getProcessedDir().normalize().resolve(video.getProcessedFile());
+            Path videoPath = mediaStorageProperties.getSourceDir().normalize().resolve(video.getSourceFile());
             Resource resource = new FileSystemResource(videoPath);
-            log.info("Trying to serve from disk - {} ", resource.getURI());
+            log.info("Trying to serve from disk - {} ", resource.getFilename());
             long length = resource.contentLength();
             HttpRange range = headers.getRange().stream().findFirst().orElse(null);
 
@@ -48,14 +48,14 @@ public class StreamingService {
                 long contentLength = end - start + 1;
                 ResourceRegion region = new ResourceRegion(resource, start, contentLength);
                 return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                        .contentType(MediaType.valueOf("video/mp4"))
+                        .contentType(MediaType.valueOf("video/x-matroska"))
                         .contentLength(contentLength)
                         .body(region);
             } else {
                 log.info("No range requested");
                 ResourceRegion region = new ResourceRegion(resource, 0, Math.min(CHUNK_SIZE, length));
                 return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                        .contentType(MediaType.valueOf("video/mp4"))
+                        .contentType(MediaType.valueOf("video/x-matroska"))
                         .contentLength(region.getCount())
                         .body(region);
             }

@@ -14,37 +14,11 @@ public class MediaStorageProperties {
      */
     private Path sourceDir;
 
-    /**
-     * Base directory where processed MP4 files are stored.
-     */
-    private Path processedDir;
-
-    /**
-     * Base directory where thumbnail images are stored.
-     */
-    private Path thumbnailDir;
-
     public Path getSourceDir() {
         return sourceDir;
     }
 
     public void setSourceDir(Path sourceDir) {
         this.sourceDir = sourceDir;
-    }
-
-    public Path getProcessedDir() {
-        return processedDir;
-    }
-
-    public void setProcessedDir(Path processedDir) {
-        this.processedDir = processedDir;
-    }
-
-    public Path getThumbnailDir() {
-        return thumbnailDir;
-    }
-
-    public void setThumbnailDir(Path thumbnailDir) {
-        this.thumbnailDir = thumbnailDir;
     }
 }
