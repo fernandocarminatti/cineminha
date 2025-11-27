@@ -40,16 +40,4 @@ public class AdminController {
         catalogManagementService.scanForNewFiles();
         return ResponseEntity.ok().build();
     }
-
-    @PostMapping("/convert/{id}")
-    public ResponseEntity<Resource> triggerVideoConversion(@PathVariable UUID id){
-        catalogManagementService.triggerVideoProcessing(id);
-        return ResponseEntity.accepted().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVideo(@PathVariable UUID id){
-        catalogManagementService.deleteVideoRecord(id);
-        return ResponseEntity.ok().build();
-    }
 }

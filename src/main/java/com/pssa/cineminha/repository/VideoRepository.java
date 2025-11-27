@@ -2,7 +2,6 @@ package com.pssa.cineminha.repository;
 
 import com.pssa.cineminha.dto.VideoFileResponseDto;
 import com.pssa.cineminha.entity.VideoFile;
-import com.pssa.cineminha.entity.VideoStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +12,4 @@ import java.util.UUID;
 @Repository
 public interface VideoRepository extends JpaRepository<VideoFile, UUID> {
     Optional<VideoFile> findBySourceFile(String sourceFile);
-    List<VideoFileResponseDto> findByStatus(VideoStatus status);
 }

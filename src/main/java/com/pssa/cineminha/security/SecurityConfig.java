@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -30,6 +31,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        BasicAuthenticationEntryPoint basicEntryPoint = new BasicAuthenticationEntryPoint();
+        basicEntryPoint.setRealmName("Cineminha");
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
@@ -37,9 +42,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/static/thumbnails/**").permitAll()
                         .requestMatchers("/h2-console/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/videos/stream/**").authenticated()
                         .requestMatchers("/api/v1/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
+                .httpBasic(basic -> basic.authenticationEntryPoint(basicEntryPoint))
                 .formLogin(login -> login
                         .loginProcessingUrl("/api/v1/auth/login")
                         .successHandler((request, response, authentication) -> {
@@ -59,12 +66,7 @@ public class SecurityConfig {
                         })
                         .permitAll())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, authEx) -> {
-                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            res.getWriter().flush();
-                        }));
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
         return http.build();
     }
 

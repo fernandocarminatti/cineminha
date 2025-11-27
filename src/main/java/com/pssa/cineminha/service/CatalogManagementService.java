@@ -3,7 +3,6 @@ package com.pssa.cineminha.service;
 import com.pssa.cineminha.config.MediaStorageProperties;
 import com.pssa.cineminha.dto.VideoFileResponseDto;
 import com.pssa.cineminha.entity.VideoFile;
-import com.pssa.cineminha.entity.VideoStatus;
 import com.pssa.cineminha.exception.VideoNotFoundException;
 import com.pssa.cineminha.repository.VideoRepository;
 import org.slf4j.Logger;
@@ -24,13 +23,11 @@ public class CatalogManagementService {
 
     private final MediaStorageProperties mediaStorageProperties;
     private final VideoRepository videoRepository;
-    private final VideoProcessingService videoProcessingService;
     private final Logger log = LoggerFactory.getLogger(CatalogManagementService.class);
 
-    public CatalogManagementService(MediaStorageProperties mediaStorageProperties, VideoRepository videoRepository, VideoProcessingService videoProcessingService) {
+    public CatalogManagementService(MediaStorageProperties mediaStorageProperties, VideoRepository videoRepository) {
         this.mediaStorageProperties = mediaStorageProperties;
         this.videoRepository = videoRepository;
-        this.videoProcessingService = videoProcessingService;
     }
 
     public void scanForNewFiles() {
@@ -64,31 +61,6 @@ public class CatalogManagementService {
         }
     }
 
-    @Async
-    public void triggerVideoProcessing(UUID videoId) {
-        VideoFile video = videoRepository.findById(videoId).orElseThrow(VideoNotFoundException::new);
-        video.setStatus(VideoStatus.CONVERTING);
-        videoRepository.save(video);
-        try {
-            videoProcessingService.startVideoConversion(video);
-            video.setStatus(VideoStatus.READY);
-            videoRepository.save(video);
-        } catch(IOException e){
-            log.error("IO Error processing video with id {}", videoId, e);
-            video.setStatus(VideoStatus.ERROR);
-            videoRepository.save(video);
-        } catch(InterruptedException e){
-            log.error("Interrupted while processing video with id {}", videoId, e);
-            video.setStatus(VideoStatus.ERROR);
-            videoRepository.save(video);
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    public List<VideoFileResponseDto> getVideoFilesByStatus(VideoStatus status){
-        return this.videoRepository.findByStatus(status);
-    }
-
     public Optional<VideoFile> getVideoById(UUID id){
         return this.videoRepository.findById(id);
     }
@@ -97,34 +69,19 @@ public class CatalogManagementService {
         return this.videoRepository.findAll();
     }
 
-    public void deleteVideoRecord(UUID id){
-        Optional<VideoFile> video = this.videoRepository.findById(id);
-        if(video.isEmpty()){
-            log.info("Video with id {} not found - Nothing to do.", id);
-            throw new VideoNotFoundException();
-        }
-
-        if(video.get().getProcessedFile() == null || video.get().getThumbnailFile() == null){
-            log.info("Video with id {} has no processed path or thumbnail file - Nothing to do.", id);
-            throw new VideoNotFoundException();
-        }
-
-        try {
-            log.info("Trying to remove record {} from disk", id);
-            removeFromDisk(video.get());
-            videoRepository.deleteById(id);
-        } catch (Exception e) {
-            log.error("Error deleting video record with id {}", id, e);
-        }
+    public List<VideoFileResponseDto> getStreammableVideos(){
+        return this.videoRepository.findAll()
+                .stream()
+                .map(
+                        video -> new VideoFileResponseDto(video.getId(), video.getTitle()))
+                .toList();
     }
 
-    public void removeFromDisk(VideoFile video) {
+    public void removeVideoRecord(UUID id){
         try{
-            Files.delete(mediaStorageProperties.getProcessedDir().normalize().resolve(video.getProcessedFile()));
-            Files.delete(mediaStorageProperties.getThumbnailDir().normalize().resolve(video.getThumbnailFile()));
-            log.info("Successfully deleted video file from disk");
-        } catch (IOException e){
-            log.error("Error deleting video file from disk: {}", e.getMessage());
+            videoRepository.deleteById(id);
+        } catch (Exception e){
+            log.error("Error deleting video record: {}", id, e);
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.pssa.cineminha.controller;
 
 import com.pssa.cineminha.dto.VideoFileResponseDto;
-import com.pssa.cineminha.entity.VideoStatus;
 import com.pssa.cineminha.service.CatalogManagementService;
 import com.pssa.cineminha.service.StreamingService;
 import org.springframework.core.io.support.ResourceRegion;
@@ -25,8 +24,8 @@ public class VideoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<VideoFileResponseDto>> getReadyVideos(){
-        List<VideoFileResponseDto> readyVideos = this.catalogManagementService.getVideoFilesByStatus(VideoStatus.READY);
+    public ResponseEntity<List<VideoFileResponseDto>> getVideoList(){
+        List<VideoFileResponseDto> readyVideos = this.catalogManagementService.getStreammableVideos();
         return ResponseEntity.ok(readyVideos);
     }
 
